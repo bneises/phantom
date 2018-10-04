@@ -8,8 +8,6 @@ from phantom.base_connector import BaseConnector
 from phantom.action_result import ActionResult
 from phantom.vault import Vault
 
-# Usage of the consts file is recommended
-# from wget_consts import *
 import requests
 import json
 import datetime
@@ -35,7 +33,7 @@ class WgetConnector(BaseConnector):
         # modify this as you deem fit.
         self._base_url = None
 
-    def _process_empty_reponse(self, response, action_result):
+    def _process_empty_response(self, response, action_result):
 
         if response.status_code == 200:
             return RetVal(phantom.APP_SUCCESS, {})
@@ -104,7 +102,7 @@ class WgetConnector(BaseConnector):
 
         # it's not content-type that is to be parsed, handle an empty response
         if not r.text:
-            return self._process_empty_reponse(r, action_result)
+            return self._process_empty_response(r, action_result)
 
         # everything else is actually an error at this point
         message = "Can't process response from server. Status Code: {0} Data from server: {1}".format(
@@ -163,12 +161,6 @@ class WgetConnector(BaseConnector):
         # Return success
         self.save_progress("Test Connectivity Passed")
         return action_result.set_status(phantom.APP_SUCCESS)
-        
-        """
-        # For now return Error with a message, in case of success we don't set the message, but use the summary
-        self.save_progress("Test Connectivity Failed, action not yet implemented")
-        return action_result.set_status(phantom.APP_ERROR, "Action not yet implemented")
-        """
 
     def _handle_get_file(self, param):
         
@@ -306,7 +298,6 @@ class WgetConnector(BaseConnector):
 
         # Optional values should use the .get() function
         optional_config_name = config.get('proxy domain')
-        
 
         return phantom.APP_SUCCESS
 
