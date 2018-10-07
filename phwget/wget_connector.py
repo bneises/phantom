@@ -173,22 +173,8 @@ class WgetConnector(BaseConnector):
 
         # Iniatite target URL variable
         TARGET_URL = param['target url']
-
-        # If proxy configuration exists, make with proxy
-        config = self.get_config()
-        if config.get('proxy domain'):
-            # get the config proxy domain
-            PROXY_TARGET = config.get('proxy domain')
-            # create a dict for the requests module
-            PROXY_DICT = {
-                "http":PROXY_TARGET,
-                "https":PROXY_TARGET,
-                "ftp":PROXY_TARGET
-
-            }
-            r = requests.get(TARGET_URL,proxies=PROXY_DICT)
-        else:
-            r = requests.get(TARGET_URL)
+        
+        r = requests.get(TARGET_URL)
 
         # -------------------------------------
         # NAMING THE FILE, SAVING TO VAULT TMP
