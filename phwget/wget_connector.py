@@ -210,13 +210,7 @@ class WgetConnector(BaseConnector):
         container_id = self.get_container_id()
 
         # Add Vault attachment
-        Vault.add_attachment(vault_path, container_id, file_name=vault_filename, metadata=dict())
-
-        # Use Vault API to see where the file was saved
-        vault_info = Vault.get_file_info(vault_id=None, file_name=vault_filename, container_id=None)
-
-        # Get Vault ID of the saved file
-        vault_id = vault_info[0]['vault_id']
+        vault_info = Vault.add_attachment(vault_path, container_id, file_name=vault_filename)
         
         # -------------------------------------
         # RESULTS AND REPORTING
@@ -231,9 +225,8 @@ class WgetConnector(BaseConnector):
 
         # Create a results dictionary object
         RESULT = {
-            "file_name":vault_filename,
-            "vault_id":vault_id,
-            "vault_path":vault_path
+            "file_name": vault_filename,
+            "vault_id": vault_info['vault_id']
         }
 
         # Post results to action_result
@@ -241,7 +234,7 @@ class WgetConnector(BaseConnector):
 
         # Add a dictionary that is made up of the most important values from data into the summary
         summary = action_result.update_summary({})
-        summary['vault_id'] = vault_id
+        summary['vault_id'] = vault_info['vault_id']
 
         # Return success, no need to set the message, only the status
         # BaseConnector will create a textual message based off of the summary dictionary
