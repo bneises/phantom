@@ -15,16 +15,7 @@
     "main_module": "wget_connector.py",
     "min_phantom_version": "3.0.284",
     "app_wizard_version": "1.0.0",
-    "configuration": {
-        "proxy domain": {
-            "description": "Option to route wget request via a proxy domain.",
-            "data_type": "string",
-            "required": false,
-            "value_list": [],
-            "default": "",
-            "order": 0
-        }
-    },
+    "configuration": {},
     "actions": [
         {
             "action": "test connectivity",
