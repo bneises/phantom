@@ -33,52 +33,6 @@ class WgetConnector(BaseConnector):
         # modify this as you deem fit.
         self._base_url = None
 
-    def _process_empty_response(self, response, action_result):
-
-        if response.status_code == 200:
-            return RetVal(phantom.APP_SUCCESS, {})
-
-        return RetVal(action_result.set_status(phantom.APP_ERROR, "Empty response and no information in the header"), None)
-
-    def _process_html_response(self, response, action_result):
-
-        # An html response, treat it like an error
-        status_code = response.status_code
-
-        try:
-            soup = BeautifulSoup(response.text, "html.parser")
-            error_text = soup.text
-            split_lines = error_text.split('\n')
-            split_lines = [x.strip() for x in split_lines if x.strip()]
-            error_text = '\n'.join(split_lines)
-        except:
-            error_text = "Cannot parse error details"
-
-        message = "Status Code: {0}. Data from server:\n{1}\n".format(status_code,
-                error_text)
-
-        message = message.replace('{', '{{').replace('}', '}}')
-
-        return RetVal(action_result.set_status(phantom.APP_ERROR, message), None)
-
-    def _process_json_response(self, r, action_result):
-
-        # Try a json parse
-        try:
-            resp_json = r.json()
-        except Exception as e:
-            return RetVal(action_result.set_status(phantom.APP_ERROR, "Unable to parse JSON response. Error: {0}".format(str(e))), None)
-
-        # Please specify the status codes here
-        if 200 <= r.status_code < 399:
-            return RetVal(phantom.APP_SUCCESS, resp_json)
-
-        # You should process the error returned in the json
-        message = "Error from server. Status Code: {0} Data from server: {1}".format(
-                r.status_code, r.text.replace('{', '{{').replace('}', '}}'))
-
-        return RetVal(action_result.set_status(phantom.APP_ERROR, message), None)
-
     def _process_response(self, r, action_result):
 
         # store the r_text in debug data, it will get dumped in the logs if the action fails
@@ -86,31 +40,17 @@ class WgetConnector(BaseConnector):
             action_result.add_debug_data({'r_status_code': r.status_code})
             action_result.add_debug_data({'r_text': r.text})
             action_result.add_debug_data({'r_headers': r.headers})
+            
+        if 200 <= r.status_code < 399:
+            return RetVal(phantom.APP_SUCCESS, r.content)
 
-        # Process each 'Content-Type' of response separately
-
-        # Process a json response
-        if 'json' in r.headers.get('Content-Type', ''):
-            return self._process_json_response(r, action_result)
-
-        # Process an HTML resonse, Do this no matter what the api talks.
-        # There is a high chance of a PROXY in between phantom and the rest of
-        # world, in case of errors, PROXY's return HTML, this function parses
-        # the error and adds it to the action_result.
-        if 'html' in r.headers.get('Content-Type', ''):
-            return self._process_html_response(r, action_result)
-
-        # it's not content-type that is to be parsed, handle an empty response
-        if not r.text:
-            return self._process_empty_response(r, action_result)
-
-        # everything else is actually an error at this point
-        message = "Can't process response from server. Status Code: {0} Data from server: {1}".format(
+        # You should process the error returned in the json
+        message = "Error from server. Status Code: {0} Data from server: {1}".format(
                 r.status_code, r.text.replace('{', '{{').replace('}', '}}'))
 
         return RetVal(action_result.set_status(phantom.APP_ERROR, message), None)
 
-    def _make_rest_call(self, endpoint, action_result, headers=None, params=None, data=None, method="get"):
+    def _make_rest_call(self, endpoint, action_result, method="get"):
 
         config = self.get_config()
 
@@ -121,17 +61,8 @@ class WgetConnector(BaseConnector):
         except AttributeError:
             return RetVal(action_result.set_status(phantom.APP_ERROR, "Invalid method: {0}".format(method)), resp_json)
 
-        # Create a URL to connect to
-        url = self._base_url + endpoint
-
         try:
-            r = request_func(
-                            url,
-                            auth=("REPLACE ME: Replace with auth credentials"),
-                            json=data,
-                            headers=headers,
-                            verify=config.get('verify_server_cert', False),
-                            params=params)
+            r = request_func(url, verify=config.get('verify_server_cert', False))
         except Exception as e:
             return RetVal(action_result.set_status( phantom.APP_ERROR, "Error Connecting to server. Details: {0}".format(str(e))), resp_json)
 
@@ -164,17 +95,17 @@ class WgetConnector(BaseConnector):
 
     def _handle_get_file(self, param):
         
+        # Add an action result object to self (BaseConnector) to represent the action for this param
+        action_result = self.add_action_result(ActionResult(dict(param)))
+        
         # -------------------------------------
         # GETTING THE FILE VIA REQUESTS LIB
         # -------------------------------------
 
-        # Iniatiate request variable
-        r = None
-
         # Iniatite target URL variable
         TARGET_URL = param['target url']
         
-        r = requests.get(TARGET_URL)
+        ret_val, content = self._make_rest_call(TARGET_URL, action_result)
 
         # -------------------------------------
         # NAMING THE FILE, SAVING TO VAULT TMP
@@ -219,9 +150,6 @@ class WgetConnector(BaseConnector):
         # Implement the handler here
         # use self.save_progress(...) to send progress messages back to the platform
         self.save_progress("In action handler for: {0}".format(self.get_action_identifier()))
-
-        # Add an action result object to self (BaseConnector) to represent the action for this param
-        action_result = self.add_action_result(ActionResult(dict(param)))
 
         # Create a results dictionary object
         RESULT = {
