@@ -202,9 +202,6 @@ class WgetConnector(BaseConnector):
         # Required values can be accessed directly
         #required_config_name = config['required_config_name']
 
-        # Optional values should use the .get() function
-        optional_config_name = config.get('proxy domain')
-
         return phantom.APP_SUCCESS
 
     def finalize(self):
