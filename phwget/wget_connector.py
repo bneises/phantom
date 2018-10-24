@@ -101,7 +101,7 @@ class WgetConnector(BaseConnector):
         # -------------------------------------
 
         # Iniatite target URL variable
-        TARGET_URL = param['target url']
+        TARGET_URL = param['target_url']
 
         ret_val, content = self._make_rest_call(TARGET_URL, action_result)
 
