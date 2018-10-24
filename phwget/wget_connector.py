@@ -11,7 +11,6 @@ from phantom.vault import Vault
 import requests
 import json
 import datetime
-from bs4 import BeautifulSoup
 
 
 class RetVal(tuple):
@@ -40,7 +39,7 @@ class WgetConnector(BaseConnector):
             action_result.add_debug_data({'r_status_code': r.status_code})
             # action_result.add_debug_data({'r_text': r.text})
             action_result.add_debug_data({'r_headers': r.headers})
-            
+
         if 200 <= r.status_code < 399:
             return RetVal(phantom.APP_SUCCESS, r.content)
 
@@ -50,7 +49,7 @@ class WgetConnector(BaseConnector):
 
         return RetVal(action_result.set_status(phantom.APP_ERROR, message), None)
 
-    def _make_rest_call(self, endpoint, action_result, method="get"):
+    def _make_rest_call(self, url, action_result, method="get"):
 
         config = self.get_config()
 
@@ -93,17 +92,17 @@ class WgetConnector(BaseConnector):
         return action_result.set_status(phantom.APP_SUCCESS)
 
     def _handle_get_file(self, param):
-        
+
         # Add an action result object to self (BaseConnector) to represent the action for this param
         action_result = self.add_action_result(ActionResult(dict(param)))
-        
+
         # -------------------------------------
         # GETTING THE FILE VIA REQUESTS LIB
         # -------------------------------------
 
         # Iniatite target URL variable
         TARGET_URL = param['target url']
-        
+
         ret_val, content = self._make_rest_call(TARGET_URL, action_result)
 
         # -------------------------------------
@@ -122,10 +121,10 @@ class WgetConnector(BaseConnector):
         timestamp = datetime.datetime.now().strftime('%m-%d-%Y_%H-%M-%S')
 
         # Assemble vault filename
-        vault_filename = '%s_%s.%s' % (filename,timestamp,filetype)
+        vault_filename = '%s_%s.%s' % (filename, timestamp, filetype)
 
         # Vault path
-        vault_path = '/opt/phantom/vault/tmp/'+vault_filename
+        vault_path = '/opt/phantom/vault/tmp/' + vault_filename
 
         # Save requests content to vault path
         with open(vault_path, 'wb') as f:
@@ -141,7 +140,7 @@ class WgetConnector(BaseConnector):
 
         # Add Vault attachment
         vault_info = Vault.add_attachment(vault_path, container_id, file_name=vault_filename)
-        
+
         # -------------------------------------
         # RESULTS AND REPORTING
         # -------------------------------------
@@ -168,7 +167,7 @@ class WgetConnector(BaseConnector):
         return action_result.set_status(phantom.APP_SUCCESS)
 
         # For now return Error with a message, in case of success we don't set the message, but use the summary
-        #return action_result.set_status(phantom.APP_ERROR, "Action not yet implemented")
+        # return action_result.set_status(phantom.APP_ERROR, "Action not yet implemented")
 
     def handle_action(self, param):
 
@@ -193,14 +192,13 @@ class WgetConnector(BaseConnector):
         # that needs to be accessed across actions
         self._state = self.load_state()
 
-        
         # get the asset config
-        config = self.get_config()
+        # config = self.get_config()
 
         # Access values in asset config by the name
 
         # Required values can be accessed directly
-        #required_config_name = config['required_config_name']
+        # required_config_name = config['required_config_name']
 
         return phantom.APP_SUCCESS
 
