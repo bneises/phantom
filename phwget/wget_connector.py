@@ -264,7 +264,7 @@ if __name__ == '__main__':
         connector = WgetConnector()
         connector.print_progress_message = True
 
-        if not session_id:
+        if session_id:
             in_json['user_session_token'] = session_id
             connector._set_csrf_info(csrftoken, headers['Referer'])
 
