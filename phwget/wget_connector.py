@@ -63,7 +63,7 @@ class WgetConnector(BaseConnector):
         try:
             r = request_func(url, verify=config.get('verify_server_cert', False))
         except Exception as e:
-            return RetVal(action_result.set_status( phantom.APP_ERROR, "Error Connecting to server. Details: {0}".format(str(e))), resp_json)
+            return RetVal(action_result.set_status(phantom.APP_ERROR, "Error Connecting to server. Details: {0}".format(str(e))), resp_json)
 
         return self._process_response(r, action_result)
 
@@ -100,22 +100,22 @@ class WgetConnector(BaseConnector):
         # GETTING THE FILE VIA REQUESTS LIB
         # -------------------------------------
 
-        # Iniatite target URL variable
-        TARGET_URL = param['target_url']
+        # Initiate target URL variable
+        target_url = param['target_url']
 
-        ret_val, content = self._make_rest_call(TARGET_URL, action_result)
+        ret_val, content = self._make_rest_call(target_url, action_result)
 
         # -------------------------------------
         # NAMING THE FILE, SAVING TO VAULT TMP
         # -------------------------------------
 
-        # Filetype discovery
+        # File type discovery
         # use the file extension found at target URL
-        filetype = TARGET_URL.split('.')[-1]
+        filetype = target_url.split('.')[-1]
 
         # Filename discovery
         # use string before the file extension found at target URL
-        filename = TARGET_URL.split('.')[-2].split('/')[-1]
+        filename = target_url.split('.')[-2].split('/')[-1]
 
         # Timestamp init
         timestamp = datetime.datetime.now().strftime('%m-%d-%Y_%H-%M-%S')
@@ -128,7 +128,7 @@ class WgetConnector(BaseConnector):
 
         # Save requests content to vault path
         with open(vault_path, 'wb') as f:
-            f.write(r.content)
+            f.write(content)
             f.close()
 
         # -------------------------------------
@@ -150,13 +150,13 @@ class WgetConnector(BaseConnector):
         self.save_progress("In action handler for: {0}".format(self.get_action_identifier()))
 
         # Create a results dictionary object
-        RESULT = {
+        result = {
             "file_name": vault_filename,
             "vault_id": vault_info['vault_id']
         }
 
         # Post results to action_result
-        action_result.add_data(RESULT)
+        action_result.add_data(result)
 
         # Add a dictionary that is made up of the most important values from data into the summary
         summary = action_result.update_summary({})
@@ -228,13 +228,13 @@ if __name__ == '__main__':
     username = args.username
     password = args.password
 
-    if (username is not None and password is None):
+    if username and not password:
 
         # User specified a username but not a password, so ask
         import getpass
         password = getpass.getpass("Password: ")
 
-    if (username and password):
+    if username and password:
         try:
             print ("Accessing the Login page")
             r = requests.get("https://127.0.0.1/login", verify=False)
@@ -253,7 +253,7 @@ if __name__ == '__main__':
             r2 = requests.post("https://127.0.0.1/login", verify=False, data=data, headers=headers)
             session_id = r2.cookies['sessionid']
         except Exception as e:
-            print ("Unable to get session id from the platfrom. Error: " + str(e))
+            print("Unable to get session id from the platform. Error: " + str(e))
             exit(1)
 
     with open(args.input_test_json) as f:
@@ -264,11 +264,11 @@ if __name__ == '__main__':
         connector = WgetConnector()
         connector.print_progress_message = True
 
-        if (session_id is not None):
+        if not session_id:
             in_json['user_session_token'] = session_id
             connector._set_csrf_info(csrftoken, headers['Referer'])
 
         ret_val = connector._handle_action(json.dumps(in_json), None)
-        print (json.dumps(json.loads(ret_val), indent=4))
+        print(json.dumps(json.loads(ret_val), indent=4))
 
     exit(0)
